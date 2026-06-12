@@ -56,6 +56,15 @@ fun AboutScreen() {
                 "any time, with no clutter and no ads.",
         )
 
+        Section("Private by design")
+        Body(
+            "🚫  No ads — ever\n" +
+                "🚫  No trackers, no analytics\n" +
+                "🔒  Your library, history & downloads never leave your device\n" +
+                "🪶  Tiny and fast — a fraction of the size of other manga apps\n" +
+                "📡  No account or sign-up required",
+        )
+
         Section("Why it exists")
         Body(
             "Most manga apps are either bloated, full of ads, or send your data to the cloud. " +

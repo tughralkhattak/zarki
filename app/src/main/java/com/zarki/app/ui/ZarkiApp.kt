@@ -34,6 +34,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.zarki.app.ui.about.AboutScreen
+import com.zarki.app.ui.backup.BackupScreen
 import com.zarki.app.ui.browse.BrowseScreen
 import com.zarki.app.ui.browse.CatalogViewModel
 import com.zarki.app.ui.browse.SourceCatalogScreen
@@ -120,9 +121,13 @@ fun ZarkiApp() {
                 composable("more") {
                     MoreScreen(
                         onOpenDownloads = { nav.navigate("downloads") },
+                        onOpenBackup = { nav.navigate("backup") },
                         onOpenSettings = { nav.navigate("settings") },
                         onOpenAbout = { nav.navigate("about") },
                     )
+                }
+                composable("backup") {
+                    SubScreen(title = "Backup & restore", onBack = { nav.popBackStack() }) { BackupScreen() }
                 }
                 composable("settings") {
                     SubScreen(title = "Settings", onBack = { nav.popBackStack() }) { SettingsScreen() }
