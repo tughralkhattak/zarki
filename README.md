@@ -62,6 +62,15 @@ The debug APK lands in `app/build/outputs/apk/debug/`. Install it on a device wi
 - Tracker integration (AniList/MyAnimeList)
 - More sources behind a clean source interface
 
+## 🤝 Contributing
+Contributions are welcome! Whether it's a bug fix, a new feature, or an idea:
+1. **Fork** this repository
+2. Create a branch (`git checkout -b my-feature`)
+3. Make your changes and commit them
+4. **Open a pull request**
+
+Bug reports and feature ideas are also welcome via the **[Issues](https://github.com/tughralkhattak/zarki/issues)** tab. See [CONTRIBUTING.md](CONTRIBUTING.md) for details. By contributing, your changes become part of Zarki under its license.
+
 ## 👤 Author & Ownership
 Designed and built by **Tughral Khattak**.
 
