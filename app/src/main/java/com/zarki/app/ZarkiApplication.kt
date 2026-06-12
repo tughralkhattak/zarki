@@ -5,6 +5,7 @@ import androidx.room.Room
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
+import com.zarki.app.data.DownloadManager
 import com.zarki.app.data.local.ZarkiDatabase
 import com.zarki.app.data.settings.SettingsStore
 import com.zarki.app.data.source.SourceManager
@@ -27,6 +28,10 @@ class ZarkiApplication : Application(), ImageLoaderFactory {
     val sources: SourceManager by lazy { SourceManager() }
 
     val settings: SettingsStore by lazy { SettingsStore(this) }
+
+    val downloads: DownloadManager by lazy {
+        DownloadManager(this, database.downloadDao(), sources)
+    }
 
     override fun onCreate() {
         super.onCreate()

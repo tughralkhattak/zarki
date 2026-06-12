@@ -62,5 +62,12 @@ The debug APK lands in `app/build/outputs/apk/debug/`. Install it on a device wi
 - Tracker integration (AniList/MyAnimeList)
 - More sources behind a clean source interface
 
-## 📄 License
-Apache 2.0
+## 👤 Author & Ownership
+Designed and built by **Tughral Khattak**.
+
+© 2026 Tughral Khattak. **All rights reserved.** Zarki and its source code are the
+property of the author — see [LICENSE](LICENSE). Manga content is provided by the
+MangaDex API and belongs to its respective creators.
+
+## 📱 Compatibility
+Runs on **Android 7.0 (Nougat) and newer** — covering virtually every active Android device.

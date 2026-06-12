@@ -11,3 +11,6 @@ local.properties
 app/build/
 build/
 build_log.txt
+# Signing — keep private! Never commit your keystore or its passwords.
+*.keystore
+keystore.properties

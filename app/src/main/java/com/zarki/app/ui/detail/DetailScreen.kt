@@ -21,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
@@ -62,6 +64,8 @@ fun DetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val saved by viewModel.isSaved.collectAsStateWithLifecycle()
     val readIds by viewModel.readChapterIds.collectAsStateWithLifecycle()
+    val downloadedIds by viewModel.downloadedIds.collectAsStateWithLifecycle()
+    val activeDownloads by viewModel.activeDownloads.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val open: (Chapter) -> Unit = { ch ->
         viewModel.markOpened(ch)
@@ -142,7 +146,14 @@ fun DetailScreen(
                         }
                     }
                     items(state.chapters, key = { it.id }) { ch ->
-                        ChapterRow(ch, read = ch.id in readIds) { open(ch) }
+                        ChapterRow(
+                            chapter = ch,
+                            read = ch.id in readIds,
+                            downloaded = ch.id in downloadedIds,
+                            downloading = ch.id in activeDownloads,
+                            onClick = { open(ch) },
+                            onDownload = { viewModel.toggleDownload(ch) },
+                        )
                     }
                 }
                 else -> Column(
@@ -266,13 +277,20 @@ private fun Header(viewModel: DetailViewModel, topPadding: androidx.compose.ui.u
 }
 
 @Composable
-private fun ChapterRow(chapter: Chapter, read: Boolean, onClick: () -> Unit) {
+private fun ChapterRow(
+    chapter: Chapter,
+    read: Boolean,
+    downloaded: Boolean,
+    downloading: Boolean,
+    onClick: () -> Unit,
+    onDownload: () -> Unit,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(16.dp, 14.dp),
+            .padding(start = 16.dp, top = 6.dp, bottom = 6.dp, end = 4.dp),
     ) {
         if (read) {
             Icon(
@@ -283,20 +301,39 @@ private fun ChapterRow(chapter: Chapter, read: Boolean, onClick: () -> Unit) {
             )
             Spacer(Modifier.width(10.dp))
         }
-        Text(
-            chapter.display,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (read) MaterialTheme.colorScheme.onSurfaceVariant
-            else MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            modifier = Modifier.weight(1f),
-        )
-        if (chapter.pages > 0) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                "${chapter.pages}p",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                chapter.display,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (read) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
             )
+            if (chapter.pages > 0) {
+                Text(
+                    "${chapter.pages} pages" + if (downloaded) " • saved offline" else "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        IconButton(onClick = onDownload) {
+            when {
+                downloading -> CircularProgressIndicator(
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.width(20.dp),
+                )
+                downloaded -> Icon(
+                    Icons.Default.DownloadDone,
+                    contentDescription = "Downloaded (tap to remove)",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                else -> Icon(
+                    Icons.Default.Download,
+                    contentDescription = "Download for offline",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

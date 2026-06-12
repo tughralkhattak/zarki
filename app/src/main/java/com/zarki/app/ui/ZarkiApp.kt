@@ -33,10 +33,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.zarki.app.ui.about.AboutScreen
 import com.zarki.app.ui.browse.BrowseScreen
 import com.zarki.app.ui.browse.CatalogViewModel
 import com.zarki.app.ui.browse.SourceCatalogScreen
 import com.zarki.app.ui.detail.DetailScreen
+import com.zarki.app.ui.downloads.DownloadsScreen
 import com.zarki.app.ui.detail.DetailViewModel
 import com.zarki.app.ui.history.HistoryScreen
 import com.zarki.app.ui.library.LibraryScreen
@@ -116,10 +118,24 @@ fun ZarkiApp() {
                     )
                 }
                 composable("more") {
-                    MoreScreen(onOpenSettings = { nav.navigate("settings") })
+                    MoreScreen(
+                        onOpenDownloads = { nav.navigate("downloads") },
+                        onOpenSettings = { nav.navigate("settings") },
+                        onOpenAbout = { nav.navigate("about") },
+                    )
                 }
                 composable("settings") {
                     SubScreen(title = "Settings", onBack = { nav.popBackStack() }) { SettingsScreen() }
+                }
+                composable("downloads") {
+                    SubScreen(title = "Downloads", onBack = { nav.popBackStack() }) {
+                        DownloadsScreen(onOpenChapter = { chapterId, title ->
+                            nav.navigate("reader/$chapterId?title=${Uri.encode(title)}")
+                        })
+                    }
+                }
+                composable("about") {
+                    SubScreen(title = "About", onBack = { nav.popBackStack() }) { AboutScreen() }
                 }
                 composable(
                     route = "manga/{id}",
