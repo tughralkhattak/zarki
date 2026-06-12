@@ -15,6 +15,9 @@ class MangaRepository {
     suspend fun popular(offset: Int = 0): List<Manga> =
         api.listManga(offset = offset).data.map { it.toManga() }
 
+    suspend fun latest(offset: Int = 0): List<Manga> =
+        api.latestManga(offset = offset).data.map { it.toManga() }
+
     suspend fun search(query: String): List<Manga> =
         api.searchManga(title = query).data.map { it.toManga() }
 
