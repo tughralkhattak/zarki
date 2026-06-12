@@ -40,6 +40,24 @@ class DetailViewModel(private val mangaId: String) : ViewModel() {
         .map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
+    val downloadedIds: StateFlow<Set<String>> = app.downloads.downloadedIds()
+        .map { it.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val activeDownloads: StateFlow<Set<String>> = app.downloads.active
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    fun toggleDownload(chapter: Chapter) {
+        val manga = _state.value.manga ?: return
+        viewModelScope.launch {
+            if (chapter.id in downloadedIds.value) {
+                app.downloads.delete(chapter.id)
+            } else {
+                app.downloads.download(chapter, manga.id, manga.title, manga.coverUrl)
+            }
+        }
+    }
+
     init {
         load()
     }

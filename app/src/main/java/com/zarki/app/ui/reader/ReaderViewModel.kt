@@ -39,6 +39,12 @@ class ReaderViewModel(private val chapterId: String) : ViewModel() {
     fun load() {
         _state.value = ReaderState(loading = true)
         viewModelScope.launch {
+            // Prefer offline pages if this chapter has been downloaded.
+            val local = app.downloads.localPages(chapterId)
+            if (local.isNotEmpty()) {
+                _state.value = ReaderState(loading = false, pages = local)
+                return@launch
+            }
             runCatching { source.pages(chapterId) }
                 .onSuccess { _state.value = ReaderState(loading = false, pages = it) }
                 .onFailure { _state.value = ReaderState(loading = false, error = it.message ?: "Failed to load pages") }

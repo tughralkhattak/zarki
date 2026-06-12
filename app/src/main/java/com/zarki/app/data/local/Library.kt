@@ -48,6 +48,37 @@ interface LibraryDao {
     suspend fun remove(id: String)
 }
 
+/** A chapter whose pages have been downloaded for offline reading. */
+@Entity(tableName = "downloads")
+data class DownloadedChapter(
+    @PrimaryKey val chapterId: String,
+    val mangaId: String,
+    val mangaTitle: String,
+    val coverUrl: String?,
+    val chapterNumber: String,
+    val pageCount: Int,
+    val dir: String,
+    val downloadedAt: Long,
+)
+
+@Dao
+interface DownloadDao {
+    @Query("SELECT * FROM downloads ORDER BY downloadedAt DESC")
+    fun observeAll(): Flow<List<DownloadedChapter>>
+
+    @Query("SELECT chapterId FROM downloads")
+    fun downloadedIds(): Flow<List<String>>
+
+    @Query("SELECT * FROM downloads WHERE chapterId = :id")
+    suspend fun get(id: String): DownloadedChapter?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun add(chapter: DownloadedChapter)
+
+    @Query("DELETE FROM downloads WHERE chapterId = :id")
+    suspend fun remove(id: String)
+}
+
 @Dao
 interface ProgressDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -67,11 +98,12 @@ interface ProgressDao {
 }
 
 @Database(
-    entities = [LibraryManga::class, ReadProgress::class],
-    version = 2,
+    entities = [LibraryManga::class, ReadProgress::class, DownloadedChapter::class],
+    version = 3,
     exportSchema = false,
 )
 abstract class ZarkiDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
     abstract fun progressDao(): ProgressDao
+    abstract fun downloadDao(): DownloadDao
 }
