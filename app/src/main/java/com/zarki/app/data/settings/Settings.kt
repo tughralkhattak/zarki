@@ -41,6 +41,22 @@ class SettingsStore(context: Context) {
     private val _state = MutableStateFlow(load())
     val state: StateFlow<Settings> = _state.asStateFlow()
 
+    private val _repos = MutableStateFlow(loadRepos())
+    val repos: StateFlow<List<String>> = _repos.asStateFlow()
+
+    private fun loadRepos(): List<String> =
+        prefs.getString("repos", "")!!.split("\n").filter { it.isNotBlank() }
+
+    fun addRepo(url: String) {
+        _repos.value = (_repos.value + url).distinct()
+        prefs.edit().putString("repos", _repos.value.joinToString("\n")).apply()
+    }
+
+    fun removeRepo(url: String) {
+        _repos.value = _repos.value - url
+        prefs.edit().putString("repos", _repos.value.joinToString("\n")).apply()
+    }
+
     private fun load() = Settings(
         theme = ThemeMode.valueOf(prefs.getString("theme", ThemeMode.DARK.name)!!),
         readerMode = ReaderMode.valueOf(prefs.getString("reader", ReaderMode.WEBTOON.name)!!),

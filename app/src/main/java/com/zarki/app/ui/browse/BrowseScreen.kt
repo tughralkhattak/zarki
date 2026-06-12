@@ -1,108 +1,114 @@
 package com.zarki.app.ui.browse
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.zarki.app.ui.components.MangaCard
+import com.zarki.app.ZarkiApplication
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BrowseScreen(
-    onOpenManga: (String) -> Unit,
-    viewModel: BrowseViewModel = viewModel(),
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+fun BrowseScreen(onOpenSource: (String) -> Unit) {
+    val app = ZarkiApplication.instance
+    val manager = app.sources
+    val repos by app.settings.repos.collectAsStateWithLifecycle()
+    var showAdd by remember { mutableStateOf(false) }
+    var repoUrl by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = state.query,
-            onValueChange = viewModel::onQueryChange,
-            placeholder = { Text("Search ${state.sourceName}…") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        Text(
+            "Sources",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(16.dp, 18.dp, 16.dp, 4.dp),
+        )
+        manager.sources.forEach { source ->
+            ListItem(
+                headlineContent = { Text(source.name) },
+                supportingContent = { Text("${source.lang.uppercase()} • tap to browse & read") },
+                leadingContent = { Icon(Icons.Default.Public, contentDescription = null) },
+                trailingContent = {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                },
+                modifier = Modifier.clickable { onOpenSource(source.id) },
+            )
+            HorizontalDivider()
+        }
+
+        Text(
+            "Extension repositories",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(16.dp, 22.dp, 16.dp, 4.dp),
+        )
+        if (repos.isEmpty()) {
+            Text(
+                "No repositories added. Zarki ships with the legal MangaDex source. " +
+                    "You can add your own extension-repo URLs — you're responsible for what you add.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(16.dp, 4.dp),
+            )
+        } else {
+            repos.forEach { url ->
+                ListItem(headlineContent = { Text(url, maxLines = 1) })
+            }
+        }
+        ListItem(
+            headlineContent = { Text("Add repository") },
+            leadingContent = { Icon(Icons.Default.Add, contentDescription = null) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .clickable { showAdd = true },
         )
+    }
 
-        if (state.query.isBlank()) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-            ) {
-                FilterChip(
-                    selected = state.filter == BrowseFilter.POPULAR,
-                    onClick = { viewModel.load(BrowseFilter.POPULAR) },
-                    label = { Text("🔥 Popular") },
-                )
-                FilterChip(
-                    selected = state.filter == BrowseFilter.LATEST,
-                    onClick = { viewModel.load(BrowseFilter.LATEST) },
-                    label = { Text("🆕 Latest") },
-                )
-            }
-        }
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            when {
-                state.loading && state.manga.isEmpty() ->
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
-
-                state.error != null && state.manga.isEmpty() ->
-                    Text(
-                        "⚠ ${state.error}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(24.dp),
+    if (showAdd) {
+        AlertDialog(
+            onDismissRequest = { showAdd = false },
+            title = { Text("Add extension repository") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = repoUrl,
+                        onValueChange = { repoUrl = it },
+                        label = { Text("Repository URL") },
+                        placeholder = { Text("https://…/index.json") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
                     )
-
-                state.manga.isEmpty() ->
-                    Text(
-                        "No results.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-
-                else -> LazyVerticalGrid(
-                    columns = GridCells.Adaptive(112.dp),
-                    contentPadding = PaddingValues(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(state.manga, key = { it.id }) { manga ->
-                        MangaCard(manga = manga, onClick = { onOpenManga(manga.id) })
-                    }
                 }
-            }
-        }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (repoUrl.isNotBlank()) app.settings.addRepo(repoUrl.trim())
+                    repoUrl = ""
+                    showAdd = false
+                }) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { showAdd = false }) { Text("Cancel") } },
+        )
     }
 }

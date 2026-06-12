@@ -145,6 +145,16 @@ fun DetailScreen(
                         ChapterRow(ch, read = ch.id in readIds) { open(ch) }
                     }
                 }
+                else -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(24.dp),
+                ) {
+                    Text("Couldn't load this manga.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = viewModel::load) { Text("Retry") }
+                }
             }
         }
     }

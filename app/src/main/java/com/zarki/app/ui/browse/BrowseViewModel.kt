@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 enum class BrowseFilter { POPULAR, LATEST }
 
-data class BrowseState(
+data class CatalogState(
     val loading: Boolean = false,
     val manga: List<Manga> = emptyList(),
     val query: String = "",
@@ -22,12 +22,14 @@ data class BrowseState(
     val error: String? = null,
 )
 
-class BrowseViewModel : ViewModel() {
+/** Browses a single source's catalogue (popular / latest / search). */
+class CatalogViewModel(sourceId: String) : ViewModel() {
 
-    private val source = ZarkiApplication.instance.sources.current
+    private val manager = ZarkiApplication.instance.sources
+    private val source = manager.sources.firstOrNull { it.id == sourceId } ?: manager.current
 
-    private val _state = MutableStateFlow(BrowseState(sourceName = source.name))
-    val state: StateFlow<BrowseState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(CatalogState(sourceName = source.name))
+    val state: StateFlow<CatalogState> = _state.asStateFlow()
 
     private var searchJob: Job? = null
 
