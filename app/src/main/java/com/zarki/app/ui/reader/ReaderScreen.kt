@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -16,6 +17,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,7 +42,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.zarki.app.data.settings.ReaderMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,30 +69,34 @@ fun ReaderScreen(
                 color = Color.White,
             )
             state.error != null -> Text(
-                "⚠ ${state.error}",
-                color = MaterialTheme.colorScheme.error,
+                "⚠ ${state.error}\n\nTap back and try another chapter.",
+                color = Color(0xFFFF8A8A),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(24.dp),
             )
-            else -> {
-                when (mode) {
-                    ReaderMode.WEBTOON -> WebtoonReader(state.pages, onTap = toggleMenu)
-                    ReaderMode.PAGED, ReaderMode.PAGED_RTL -> {
-                        HorizontalPager(
-                            state = pagerState,
-                            reverseLayout = mode == ReaderMode.PAGED_RTL,
-                            modifier = Modifier.fillMaxSize(),
-                        ) { page ->
-                            ZoomableImage(url = state.pages[page], onTap = toggleMenu)
-                        }
-                    }
+            state.pages.isEmpty() -> Text(
+                "No readable pages found for this chapter.\n" +
+                    "It may be hosted on an external site (common on MangaDex). Try another chapter.",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(24.dp),
+            )
+            else -> when (mode) {
+                ReaderMode.WEBTOON -> WebtoonReader(state.pages, onTap = toggleMenu)
+                ReaderMode.PAGED, ReaderMode.PAGED_RTL -> HorizontalPager(
+                    state = pagerState,
+                    reverseLayout = mode == ReaderMode.PAGED_RTL,
+                    modifier = Modifier.fillMaxSize(),
+                ) { page ->
+                    ZoomableImage(url = state.pages[page], onTap = toggleMenu)
                 }
             }
         }
 
-        // top bar
         AnimatedVisibility(visible = menuVisible, modifier = Modifier.align(Alignment.TopCenter)) {
             TopAppBar(
                 title = { Text(title, maxLines = 1, color = Color.White) },
@@ -103,10 +109,8 @@ fun ReaderScreen(
             )
         }
 
-        // bottom bar: page counter + reader-mode switch
         AnimatedVisibility(visible = menuVisible, modifier = Modifier.align(Alignment.BottomCenter)) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -121,8 +125,10 @@ fun ReaderScreen(
                     style = MaterialTheme.typography.labelLarge,
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp),
                 ) {
                     ReaderMode.entries.forEach { m ->
                         val selected = m == mode
@@ -134,9 +140,7 @@ fun ReaderScreen(
                             },
                             color = if (selected) MaterialTheme.colorScheme.primary else Color(0xFFBBBBBB),
                             style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier
-                                .padding(start = 6.dp)
-                                .pointerInput(m) { detectTapGestures { viewModel.setMode(m) } },
+                            modifier = Modifier.pointerInput(m) { detectTapGestures { viewModel.setMode(m) } },
                         )
                     }
                 }
@@ -153,12 +157,7 @@ private fun WebtoonReader(pages: List<String>, onTap: () -> Unit) {
             .pointerInput(Unit) { detectTapGestures { onTap() } },
     ) {
         itemsIndexed(pages) { index, url ->
-            AsyncImage(
-                model = url,
-                contentDescription = "Page ${index + 1}",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            PageImage(url = url, index = index, fillHeight = false)
         }
     }
 }
@@ -178,10 +177,12 @@ private fun ZoomableImage(url: String, onTap: () -> Unit) {
                 }
             },
     ) {
-        AsyncImage(
+        SubcomposeAsyncImage(
             model = url,
             contentDescription = null,
             contentScale = ContentScale.Fit,
+            loading = { LoadingBox() },
+            error = { ErrorBox() },
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer(
@@ -191,5 +192,43 @@ private fun ZoomableImage(url: String, onTap: () -> Unit) {
                     translationY = offset.y,
                 ),
         )
+    }
+}
+
+@Composable
+private fun PageImage(url: String, index: Int, fillHeight: Boolean) {
+    SubcomposeAsyncImage(
+        model = url,
+        contentDescription = "Page ${index + 1}",
+        contentScale = ContentScale.FillWidth,
+        loading = { LoadingBox() },
+        error = { ErrorBox() },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun LoadingBox() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(420.dp)
+            .background(Color(0xFF111111)),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(color = Color.White)
+    }
+}
+
+@Composable
+private fun ErrorBox() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .background(Color(0xFF1A1A1A)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Default.BrokenImage, contentDescription = "Failed to load", tint = Color(0xFF888888))
     }
 }

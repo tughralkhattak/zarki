@@ -34,6 +34,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.zarki.app.ui.browse.BrowseScreen
+import com.zarki.app.ui.browse.CatalogViewModel
+import com.zarki.app.ui.browse.SourceCatalogScreen
 import com.zarki.app.ui.detail.DetailScreen
 import com.zarki.app.ui.detail.DetailViewModel
 import com.zarki.app.ui.history.HistoryScreen
@@ -42,7 +44,6 @@ import com.zarki.app.ui.more.MoreScreen
 import com.zarki.app.ui.reader.ReaderScreen
 import com.zarki.app.ui.reader.ReaderViewModel
 import com.zarki.app.ui.settings.SettingsScreen
-import com.zarki.app.ui.sources.SourcesScreen
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 
@@ -97,16 +98,25 @@ fun ZarkiApp() {
                     HistoryScreen(onOpenManga = { nav.navigate("manga/$it") })
                 }
                 composable("browse") {
-                    BrowseScreen(onOpenManga = { nav.navigate("manga/$it") })
+                    BrowseScreen(onOpenSource = { nav.navigate("catalog/$it") })
                 }
-                composable("more") {
-                    MoreScreen(
-                        onOpenSources = { nav.navigate("sources") },
-                        onOpenSettings = { nav.navigate("settings") },
+                composable(
+                    route = "catalog/{sourceId}",
+                    arguments = listOf(navArgument("sourceId") { type = NavType.StringType }),
+                ) { entry ->
+                    val sid = entry.arguments?.getString("sourceId").orEmpty()
+                    val vm: CatalogViewModel = viewModel(
+                        key = "catalog-$sid",
+                        factory = factoryFor { CatalogViewModel(sid) },
+                    )
+                    SourceCatalogScreen(
+                        viewModel = vm,
+                        onBack = { nav.popBackStack() },
+                        onOpenManga = { nav.navigate("manga/$it") },
                     )
                 }
-                composable("sources") {
-                    SubScreen(title = "Sources", onBack = { nav.popBackStack() }) { SourcesScreen() }
+                composable("more") {
+                    MoreScreen(onOpenSettings = { nav.navigate("settings") })
                 }
                 composable("settings") {
                     SubScreen(title = "Settings", onBack = { nav.popBackStack() }) { SettingsScreen() }

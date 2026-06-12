@@ -1,0 +1,131 @@
+package com.zarki.app.ui.browse
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zarki.app.ui.components.MangaCard
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SourceCatalogScreen(
+    viewModel: CatalogViewModel,
+    onBack: () -> Unit,
+    onOpenManga: (String) -> Unit,
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(state.sourceName) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            OutlinedTextField(
+                value = state.query,
+                onValueChange = viewModel::onQueryChange,
+                placeholder = { Text("Search ${state.sourceName}…") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+
+            if (state.query.isBlank()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                ) {
+                    FilterChip(
+                        selected = state.filter == BrowseFilter.POPULAR,
+                        onClick = { viewModel.load(BrowseFilter.POPULAR) },
+                        label = { Text("🔥 Popular") },
+                    )
+                    FilterChip(
+                        selected = state.filter == BrowseFilter.LATEST,
+                        onClick = { viewModel.load(BrowseFilter.LATEST) },
+                        label = { Text("🆕 Latest") },
+                    )
+                }
+            }
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    state.loading && state.manga.isEmpty() ->
+                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+
+                    state.error != null && state.manga.isEmpty() ->
+                        Text(
+                            "⚠ ${state.error}",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(24.dp),
+                        )
+
+                    state.manga.isEmpty() ->
+                        Text(
+                            "No results.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+
+                    else -> LazyVerticalGrid(
+                        columns = GridCells.Adaptive(112.dp),
+                        contentPadding = PaddingValues(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(state.manga, key = { it.id }) { manga ->
+                            MangaCard(manga = manga, onClick = { onOpenManga(manga.id) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

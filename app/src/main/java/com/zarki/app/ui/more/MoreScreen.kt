@@ -19,7 +19,6 @@ import androidx.compose.foundation.clickable
 
 @Composable
 fun MoreScreen(
-    onOpenSources: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -30,12 +29,6 @@ fun MoreScreen(
             modifier = Modifier.padding(16.dp, 24.dp, 16.dp, 8.dp),
         )
         HorizontalDivider()
-        ListItem(
-            headlineContent = { Text("Sources") },
-            supportingContent = { Text("Manage content sources & repositories") },
-            leadingContent = { Icon(Icons.Default.Extension, contentDescription = null) },
-            modifier = Modifier.clickable(onClick = onOpenSources),
-        )
         ListItem(
             headlineContent = { Text("Settings") },
             supportingContent = { Text("Theme, reader mode & more") },
