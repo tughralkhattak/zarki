@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zarki — Manga Reader</title>
+<meta name="description" content="Zarki — a fast, beautiful, ad-free manga reader for Android. Read online or offline.">
+<style>
+  :root{--bg:#0b0b12;--card:#16161f;--ink:#ececf1;--muted:#9a9ab0;--p1:#b39dff;--p2:#8b6dff;--p3:#22d3ee;--line:#262631}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:
+       radial-gradient(900px 480px at 80% -10%,rgba(124,147,255,.18),transparent),var(--bg);
+       color:var(--ink);min-height:100vh;line-height:1.6}
+  .wrap{max-width:760px;margin:0 auto;padding:60px 22px 80px;text-align:center}
+  .logo{font-size:4.5rem;font-weight:800;letter-spacing:2px;
+        background:linear-gradient(90deg,var(--p1),var(--p2),var(--p3));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{color:var(--muted);font-size:1.15rem;margin-top:4px}
+  .sign{color:#6a6a80;font-size:.85rem;letter-spacing:3px;margin-top:8px}
+  .btn{display:inline-block;margin-top:34px;background:linear-gradient(90deg,var(--p2),#6d7dff);
+       color:#0b0b12;font-weight:700;font-size:1.15rem;text-decoration:none;padding:16px 42px;border-radius:14px;
+       box-shadow:0 10px 30px rgba(124,147,255,.35);transition:transform .15s}
+  .btn:hover{transform:translateY(-3px)}
+  .sub{color:var(--muted);font-size:.85rem;margin-top:12px}
+  .qr{margin-top:30px}
+  .qr img{border-radius:14px;border:1px solid var(--line);background:#fff;padding:8px}
+  .qr p{color:var(--muted);font-size:.82rem;margin-top:8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:50px;text-align:left}
+  .feat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .feat h3{font-size:1rem;margin-bottom:4px}
+  .feat p{color:var(--muted);font-size:.9rem}
+  .privacy{margin-top:44px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:left}
+  .privacy h2{font-size:1.1rem;margin-bottom:10px;color:var(--p1)}
+  .privacy ul{list-style:none}
+  .privacy li{padding:4px 0;color:var(--muted)}
+  footer{margin-top:50px;color:#6a6a80;font-size:.82rem}
+  footer a{color:var(--p1);text-decoration:none}
+  .steps{color:var(--muted);font-size:.85rem;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">Zarki</div>
+  <div class="tag">A fast, beautiful, ad-free manga reader for Android</div>
+  <div class="sign">CRAFTED BY KHATTAK</div>
+
+  <a class="btn" href="https://github.com/tughralkhattak/zarki/releases/latest/download/Zarki.apk">⬇ Download Zarki</a>
+  <div class="sub">Free • Android 7.0+ • ~11 MB</div>
+  <div class="steps">After downloading, open the file on your phone and allow "install unknown apps".</div>
+
+  <div class="qr">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://github.com/tughralkhattak/zarki/releases/latest/download/Zarki.apk" alt="Scan to download" width="180" height="180">
+    <p>📱 Scan with your phone to download</p>
+  </div>
+
+  <div class="privacy">
+    <h2>🔒 Private by design</h2>
+    <ul>
+      <li>🚫 No ads — ever</li>
+      <li>🚫 No trackers, no analytics</li>
+      <li>🔒 Your data never leaves your device</li>
+      <li>🪶 Tiny &amp; fast — a fraction of the size of other manga apps</li>
+      <li>📡 No account or sign-up required</li>
+    </ul>
+  </div>
+
+  <div class="grid">
+    <div class="feat"><h3>📖 3 reading modes</h3><p>Webtoon, left-to-right, and right-to-left manga style, with pinch-zoom.</p></div>
+    <div class="feat"><h3>⬇️ Offline downloads</h3><p>Save chapters and read anywhere — no internet needed.</p></div>
+    <div class="feat"><h3>❤️ Library &amp; history</h3><p>Save favourites and pick up reading right where you left off.</p></div>
+    <div class="feat"><h3>💾 Backup &amp; restore</h3><p>Export your library and history, restore it any time.</p></div>
+  </div>
+
+  <footer>
+    © 2026 Tughral Khattak. All rights reserved.<br>
+    <a href="https://github.com/tughralkhattak/zarki">View on GitHub</a>
+  </footer>
+</div>
+</body>
+</html>

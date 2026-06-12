@@ -25,7 +25,9 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,10 +45,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,6 +76,8 @@ fun DetailScreen(
         viewModel.markOpened(ch)
         onOpenChapter(ch.id, ch.display)
     }
+    val context = LocalContext.current
+    fun mangaUrl() = "https://mangadex.org/title/${state.manga?.id.orEmpty()}"
 
     Scaffold(
         topBar = {
@@ -83,6 +90,20 @@ fun DetailScreen(
                 },
                 actions = {
                     if (state.manga != null) {
+                        IconButton(onClick = {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(mangaUrl())))
+                        }) {
+                            Icon(Icons.Default.OpenInNew, contentDescription = "Open in browser")
+                        }
+                        IconButton(onClick = {
+                            val send = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "${state.manga?.title}\n${mangaUrl()}")
+                            }
+                            context.startActivity(Intent.createChooser(send, "Share manga"))
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "Share")
+                        }
                         IconButton(onClick = viewModel::toggleSort) {
                             Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort chapters")
                         }

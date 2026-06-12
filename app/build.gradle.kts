@@ -14,6 +14,8 @@ val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) load(FileInputStream(keystorePropertiesFile))
 }
 
+base.archivesName.set("Zarki")
+
 android {
     namespace = "com.zarki.app"
     compileSdk = 35
@@ -22,8 +24,8 @@ android {
         applicationId = "com.zarki.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
     }
 
     signingConfigs {

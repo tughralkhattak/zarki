@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MoreScreen(
     onOpenDownloads: () -> Unit,
+    onOpenBackup: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
@@ -36,6 +38,12 @@ fun MoreScreen(
             supportingContent = { Text("Chapters saved for offline reading") },
             leadingContent = { Icon(Icons.Default.Download, contentDescription = null) },
             modifier = Modifier.clickable(onClick = onOpenDownloads),
+        )
+        ListItem(
+            headlineContent = { Text("Backup & restore") },
+            supportingContent = { Text("Save or restore your library & history") },
+            leadingContent = { Icon(Icons.Default.Backup, contentDescription = null) },
+            modifier = Modifier.clickable(onClick = onOpenBackup),
         )
         ListItem(
             headlineContent = { Text("Settings") },

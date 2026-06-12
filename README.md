@@ -14,7 +14,14 @@ Inspired by apps like Mihon/Tachiyomi — rebuilt from the ground up on a clean,
 - **Manga details** — cover, author, status, description, full chapter list.
 - **Reader** — smooth vertical/webtoon page reader with progressive image loading.
 - **Library** — save favourites locally (Room database); persists offline.
-- **Material 3** dark theme, edge-to-edge, adaptive cover grid.
+- **Offline downloads** — save chapters and read with no internet.
+- **History** — "continue reading" picks up where you left off.
+- **Backup & restore** — export your library + history to a file, restore any time.
+- **Open in browser / share** any manga.
+- **Material 3** themes (incl. **AMOLED**), edge-to-edge, adaptive cover grid.
+
+### 🔒 Private & lightweight
+**No ads. No trackers. No analytics. No account.** Your data never leaves your device, and the whole app is a fraction of the size of other manga readers.
 
 ## 🏗️ Architecture
 A clean, modern Android stack — MVVM with a unidirectional state flow:

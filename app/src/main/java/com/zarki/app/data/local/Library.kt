@@ -9,8 +9,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
 /** A manga the user has saved to their library. */
+@Serializable
 @Entity(tableName = "library")
 data class LibraryManga(
     @PrimaryKey val id: String,
@@ -20,6 +22,7 @@ data class LibraryManga(
 )
 
 /** Per-chapter reading progress — powers read-state, "continue", and history. */
+@Serializable
 @Entity(tableName = "progress")
 data class ReadProgress(
     @PrimaryKey val chapterId: String,
@@ -40,6 +43,9 @@ interface LibraryDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM library WHERE id = :id)")
     fun isSaved(id: String): Flow<Boolean>
+
+    @Query("SELECT * FROM library")
+    suspend fun allOnce(): List<LibraryManga>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(manga: LibraryManga)
@@ -92,6 +98,9 @@ interface ProgressDao {
 
     @Query("SELECT * FROM progress ORDER BY updatedAt DESC LIMIT 100")
     fun history(): Flow<List<ReadProgress>>
+
+    @Query("SELECT * FROM progress")
+    suspend fun allProgress(): List<ReadProgress>
 
     @Query("DELETE FROM progress")
     suspend fun clearHistory()
