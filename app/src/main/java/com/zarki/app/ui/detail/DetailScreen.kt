@@ -12,34 +12,45 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.zarki.app.domain.Chapter
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +61,12 @@ fun DetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val saved by viewModel.isSaved.collectAsStateWithLifecycle()
+    val readIds by viewModel.readChapterIds.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val open: (Chapter) -> Unit = { ch ->
+        viewModel.markOpened(ch)
+        onOpenChapter(ch.id, ch.display)
+    }
 
     Scaffold(
         topBar = {
@@ -62,6 +79,9 @@ fun DetailScreen(
                 },
                 actions = {
                     if (state.manga != null) {
+                        IconButton(onClick = viewModel::toggleSort) {
+                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort chapters")
+                        }
                         IconButton(onClick = viewModel::toggleLibrary) {
                             Icon(
                                 if (saved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -72,36 +92,57 @@ fun DetailScreen(
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             when {
                 state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 state.error != null -> Text(
                     "⚠ ${state.error}",
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(24.dp),
                 )
                 state.manga != null -> LazyColumn(
                     contentPadding = PaddingValues(bottom = 24.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    item { Header(viewModel) }
                     item {
-                        Text(
-                            "Chapters (${state.chapters.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(16.dp, 8.dp),
+                        Header(
+                            viewModel = viewModel,
+                            topPadding = padding.calculateTopPadding(),
+                            onContinue = {
+                                scope.launch {
+                                    viewModel.continueChapter()?.let { open(it) }
+                                }
+                            },
                         )
                     }
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp, 12.dp, 16.dp, 8.dp),
+                        ) {
+                            Text(
+                                "Chapters (${state.chapters.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                if (state.ascending) "Oldest first" else "Newest first",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                     items(state.chapters, key = { it.id }) { ch ->
-                        ChapterRow(ch) { onOpenChapter(ch.id, ch.display) }
+                        ChapterRow(ch, read = ch.id in readIds) { open(ch) }
                     }
                 }
             }
@@ -110,65 +151,136 @@ fun DetailScreen(
 }
 
 @Composable
-private fun Header(viewModel: DetailViewModel) {
+private fun Header(viewModel: DetailViewModel, topPadding: androidx.compose.ui.unit.Dp, onContinue: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val manga = state.manga ?: return
+
     Column {
-        Row(modifier = Modifier.padding(16.dp)) {
+        // backdrop: cover image faded into the background for a premium header
+        Box(modifier = Modifier.fillMaxWidth()) {
             AsyncImage(
                 model = manga.coverUrl,
-                contentDescription = manga.title,
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(120.dp)
-                    .height(176.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .fillMaxWidth()
+                    .height(220.dp),
             )
-            Spacer(Modifier.width(16.dp))
-            Column {
-                Text(manga.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                if (manga.authors.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color(0x66000000),
+                            1f to MaterialTheme.colorScheme.background,
+                        ),
+                    ),
+            )
+            Row(modifier = Modifier.padding(16.dp, topPadding + 48.dp, 16.dp, 0.dp)) {
+                AsyncImage(
+                    model = manga.coverUrl,
+                    contentDescription = manga.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(172.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                )
+                Spacer(Modifier.width(16.dp))
+                Column(modifier = Modifier.align(Alignment.Bottom)) {
                     Text(
-                        manga.authors.joinToString(", "),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        manga.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 3,
+                    )
+                    if (manga.authors.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            manga.authors.joinToString(", "),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        buildString {
+                            if (manga.status.isNotBlank()) append(manga.status)
+                            if (manga.year != null) append("  •  ${manga.year}")
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    buildString {
-                        if (manga.status.isNotBlank()) append(manga.status)
-                        if (manga.year != null) append("  •  ${manga.year}")
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
             }
         }
+
+        // action buttons
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(16.dp, 12.dp),
+        ) {
+            Button(onClick = onContinue, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                Spacer(Modifier.width(6.dp))
+                Text("Read")
+            }
+            OutlinedButton(onClick = viewModel::toggleLibrary, modifier = Modifier.weight(1f)) {
+                Text("♡ Library")
+            }
+        }
+
+        // tags
+        if (manga.tags.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                items(manga.tags) { tag ->
+                    AssistChip(onClick = {}, label = { Text(tag) })
+                }
+            }
+        }
+
         if (manga.description.isNotBlank()) {
             Text(
                 manga.description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(16.dp, 12.dp),
             )
         }
     }
 }
 
 @Composable
-private fun ChapterRow(chapter: Chapter, onClick: () -> Unit) {
+private fun ChapterRow(chapter: Chapter, read: Boolean, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(16.dp, 14.dp),
     ) {
-        Text(chapter.display, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+        if (read) {
+            Icon(
+                Icons.Default.CheckCircle,
+                contentDescription = "Read",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.width(20.dp),
+            )
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(
+            chapter.display,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (read) MaterialTheme.colorScheme.onSurfaceVariant
+            else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
+        )
         if (chapter.pages > 0) {
             Text(
                 "${chapter.pages}p",
