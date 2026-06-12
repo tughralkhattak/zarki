@@ -1,0 +1,128 @@
+package com.zarki.app.ui
+
+import android.net.Uri
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.zarki.app.ui.browse.BrowseScreen
+import com.zarki.app.ui.detail.DetailScreen
+import com.zarki.app.ui.detail.DetailViewModel
+import com.zarki.app.ui.library.LibraryScreen
+import com.zarki.app.ui.reader.ReaderScreen
+import com.zarki.app.ui.reader.ReaderViewModel
+
+private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+
+private val tabs = listOf(
+    Tab("library", "Library", Icons.Default.LibraryBooks),
+    Tab("browse", "Browse", Icons.Default.Explore),
+)
+
+@Composable
+fun ZarkiApp() {
+    val nav = rememberNavController()
+    val backStack by nav.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route
+    val showBars = currentRoute in tabs.map { it.route }
+
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Scaffold(
+            bottomBar = {
+                if (showBars) {
+                    NavigationBar {
+                        tabs.forEach { tab ->
+                            NavigationBarItem(
+                                selected = currentRoute == tab.route,
+                                onClick = {
+                                    nav.navigate(tab.route) {
+                                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(tab.icon, contentDescription = tab.label) },
+                                label = { Text(tab.label) },
+                            )
+                        }
+                    }
+                }
+            },
+        ) { padding ->
+            NavHost(
+                navController = nav,
+                startDestination = "library",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
+                composable("library") {
+                    LibraryScreen(onOpenManga = { nav.navigate("manga/$it") })
+                }
+                composable("browse") {
+                    BrowseScreen(onOpenManga = { nav.navigate("manga/$it") })
+                }
+                composable(
+                    route = "manga/{id}",
+                    arguments = listOf(navArgument("id") { type = NavType.StringType }),
+                ) { entry ->
+                    val id = entry.arguments?.getString("id").orEmpty()
+                    val vm: DetailViewModel = viewModel(
+                        key = "detail-$id",
+                        factory = factoryFor { DetailViewModel(id) },
+                    )
+                    DetailScreen(
+                        viewModel = vm,
+                        onBack = { nav.popBackStack() },
+                        onOpenChapter = { chapterId, title ->
+                            nav.navigate("reader/$chapterId?title=${Uri.encode(title)}")
+                        },
+                    )
+                }
+                composable(
+                    route = "reader/{chapterId}?title={title}",
+                    arguments = listOf(
+                        navArgument("chapterId") { type = NavType.StringType },
+                        navArgument("title") { type = NavType.StringType; defaultValue = "" },
+                    ),
+                ) { entry ->
+                    val chapterId = entry.arguments?.getString("chapterId").orEmpty()
+                    val title = entry.arguments?.getString("title").orEmpty()
+                    val vm: ReaderViewModel = viewModel(
+                        key = "reader-$chapterId",
+                        factory = factoryFor { ReaderViewModel(chapterId) },
+                    )
+                    ReaderScreen(viewModel = vm, title = title, onBack = { nav.popBackStack() })
+                }
+            }
+        }
+    }
+}
+
+/** Tiny helper to build a ViewModelProvider.Factory from a lambda. */
+private inline fun <VM : ViewModel> factoryFor(crossinline create: () -> VM) =
+    object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = create() as T
+    }
