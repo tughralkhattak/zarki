@@ -25,7 +25,17 @@ class MangaRepository {
         api.getManga(id).data?.toManga()
 
     suspend fun chapters(id: String): List<Chapter> {
-        val all = api.getChapters(id).data.map { c ->
+        // Page through the whole feed (MangaDex returns at most 500 per call) so
+        // long series aren't cut off.
+        val collected = mutableListOf<com.zarki.app.data.remote.ChapterData>()
+        var offset = 0
+        while (true) {
+            val resp = api.getChapters(id = id, limit = 500, offset = offset)
+            collected += resp.data
+            offset += resp.data.size
+            if (resp.data.isEmpty() || offset >= resp.total || offset > 10000) break
+        }
+        val mapped = collected.map { c ->
             Chapter(
                 id = c.id,
                 number = c.attributes.chapter ?: "",
@@ -35,11 +45,11 @@ class MangaRepository {
                 language = c.attributes.translatedLanguage,
             )
         }
-        // Keep only chapters MangaDex actually hosts pages for (pages > 0).
-        // External / licensed chapters have no readable pages, so we hide them
-        // rather than let the reader open to a dead end.
-        val readable = all.filter { it.pages > 0 }
-        return readable.ifEmpty { all }
+        // Keep readable chapters (MangaDex-hosted) and collapse duplicate chapter
+        // numbers uploaded by different scanlation groups into one entry.
+        val readable = mapped.filter { it.pages > 0 }
+        val list = readable.ifEmpty { mapped }
+        return list.distinctBy { it.number.ifBlank { it.id } }
     }
 
     /** Returns the full image URLs for every page of a chapter. */
