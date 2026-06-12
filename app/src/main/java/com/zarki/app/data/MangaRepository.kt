@@ -24,8 +24,8 @@ class MangaRepository {
     suspend fun details(id: String): Manga? =
         api.getManga(id).data?.toManga()
 
-    suspend fun chapters(id: String): List<Chapter> =
-        api.getChapters(id).data.mapNotNull { c ->
+    suspend fun chapters(id: String): List<Chapter> {
+        val all = api.getChapters(id).data.map { c ->
             Chapter(
                 id = c.id,
                 number = c.attributes.chapter ?: "",
@@ -35,6 +35,12 @@ class MangaRepository {
                 language = c.attributes.translatedLanguage,
             )
         }
+        // Keep only chapters MangaDex actually hosts pages for (pages > 0).
+        // External / licensed chapters have no readable pages, so we hide them
+        // rather than let the reader open to a dead end.
+        val readable = all.filter { it.pages > 0 }
+        return readable.ifEmpty { all }
+    }
 
     /** Returns the full image URLs for every page of a chapter. */
     suspend fun pages(chapterId: String): List<String> {
