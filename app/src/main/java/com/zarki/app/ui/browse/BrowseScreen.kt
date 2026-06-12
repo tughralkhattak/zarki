@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -40,7 +42,7 @@ fun BrowseScreen(
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::onQueryChange,
-            placeholder = { Text("Search manga…") },
+            placeholder = { Text("Search ${state.sourceName}…") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
@@ -49,6 +51,24 @@ fun BrowseScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         )
+
+        if (state.query.isBlank()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            ) {
+                FilterChip(
+                    selected = state.filter == BrowseFilter.POPULAR,
+                    onClick = { viewModel.load(BrowseFilter.POPULAR) },
+                    label = { Text("🔥 Popular") },
+                )
+                FilterChip(
+                    selected = state.filter == BrowseFilter.LATEST,
+                    onClick = { viewModel.load(BrowseFilter.LATEST) },
+                    label = { Text("🆕 Latest") },
+                )
+            }
+        }
 
         Box(modifier = Modifier.fillMaxSize()) {
             when {

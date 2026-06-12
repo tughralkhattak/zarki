@@ -4,8 +4,12 @@ import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -13,9 +17,12 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,15 +36,21 @@ import androidx.navigation.navArgument
 import com.zarki.app.ui.browse.BrowseScreen
 import com.zarki.app.ui.detail.DetailScreen
 import com.zarki.app.ui.detail.DetailViewModel
+import com.zarki.app.ui.history.HistoryScreen
 import com.zarki.app.ui.library.LibraryScreen
+import com.zarki.app.ui.more.MoreScreen
 import com.zarki.app.ui.reader.ReaderScreen
 import com.zarki.app.ui.reader.ReaderViewModel
+import com.zarki.app.ui.settings.SettingsScreen
+import com.zarki.app.ui.sources.SourcesScreen
 
-private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+private data class Tab(val route: String, val label: String, val icon: ImageVector)
 
 private val tabs = listOf(
     Tab("library", "Library", Icons.Default.LibraryBooks),
+    Tab("history", "History", Icons.Default.History),
     Tab("browse", "Browse", Icons.Default.Explore),
+    Tab("more", "More", Icons.Default.MoreHoriz),
 )
 
 @Composable
@@ -45,12 +58,12 @@ fun ZarkiApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    val showBars = currentRoute in tabs.map { it.route }
+    val showBottomBar = currentRoute in tabs.map { it.route }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Scaffold(
             bottomBar = {
-                if (showBars) {
+                if (showBottomBar) {
                     NavigationBar {
                         tabs.forEach { tab ->
                             NavigationBarItem(
@@ -80,8 +93,23 @@ fun ZarkiApp() {
                 composable("library") {
                     LibraryScreen(onOpenManga = { nav.navigate("manga/$it") })
                 }
+                composable("history") {
+                    HistoryScreen(onOpenManga = { nav.navigate("manga/$it") })
+                }
                 composable("browse") {
                     BrowseScreen(onOpenManga = { nav.navigate("manga/$it") })
+                }
+                composable("more") {
+                    MoreScreen(
+                        onOpenSources = { nav.navigate("sources") },
+                        onOpenSettings = { nav.navigate("settings") },
+                    )
+                }
+                composable("sources") {
+                    SubScreen(title = "Sources", onBack = { nav.popBackStack() }) { SourcesScreen() }
+                }
+                composable("settings") {
+                    SubScreen(title = "Settings", onBack = { nav.popBackStack() }) { SettingsScreen() }
                 }
                 composable(
                     route = "manga/{id}",
@@ -117,6 +145,30 @@ fun ZarkiApp() {
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SubScreen(title: String, onBack: () -> Unit, content: @Composable () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            color = MaterialTheme.colorScheme.background,
+        ) { content() }
     }
 }
 

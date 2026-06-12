@@ -11,30 +11,39 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class BrowseFilter { POPULAR, LATEST }
+
 data class BrowseState(
     val loading: Boolean = false,
     val manga: List<Manga> = emptyList(),
     val query: String = "",
+    val filter: BrowseFilter = BrowseFilter.POPULAR,
+    val sourceName: String = "",
     val error: String? = null,
 )
 
 class BrowseViewModel : ViewModel() {
 
-    private val repo = ZarkiApplication.instance.repository
+    private val source = ZarkiApplication.instance.sources.current
 
-    private val _state = MutableStateFlow(BrowseState())
+    private val _state = MutableStateFlow(BrowseState(sourceName = source.name))
     val state: StateFlow<BrowseState> = _state.asStateFlow()
 
     private var searchJob: Job? = null
 
     init {
-        loadPopular()
+        load(BrowseFilter.POPULAR)
     }
 
-    fun loadPopular() {
-        _state.value = _state.value.copy(loading = true, error = null, query = "")
+    fun load(filter: BrowseFilter) {
+        _state.value = _state.value.copy(loading = true, error = null, query = "", filter = filter)
         viewModelScope.launch {
-            runCatching { repo.popular() }
+            runCatching {
+                when (filter) {
+                    BrowseFilter.POPULAR -> source.popular()
+                    BrowseFilter.LATEST -> source.latest()
+                }
+            }
                 .onSuccess { _state.value = _state.value.copy(loading = false, manga = it) }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message ?: "Failed to load") }
         }
@@ -44,13 +53,13 @@ class BrowseViewModel : ViewModel() {
         _state.value = _state.value.copy(query = q)
         searchJob?.cancel()
         if (q.isBlank()) {
-            loadPopular()
+            load(_state.value.filter)
             return
         }
         searchJob = viewModelScope.launch {
-            delay(350) // debounce
+            delay(350)
             _state.value = _state.value.copy(loading = true, error = null)
-            runCatching { repo.search(q) }
+            runCatching { source.search(q) }
                 .onSuccess { _state.value = _state.value.copy(loading = false, manga = it) }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message ?: "Search failed") }
         }
