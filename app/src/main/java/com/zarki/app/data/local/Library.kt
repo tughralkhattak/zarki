@@ -2,7 +2,6 @@ package com.zarki.app.data.local
 
 import androidx.room.Dao
 import androidx.room.Database
-import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -20,6 +19,20 @@ data class LibraryManga(
     val addedAt: Long,
 )
 
+/** Per-chapter reading progress — powers read-state, "continue", and history. */
+@Entity(tableName = "progress")
+data class ReadProgress(
+    @PrimaryKey val chapterId: String,
+    val mangaId: String,
+    val mangaTitle: String,
+    val coverUrl: String?,
+    val chapterNumber: String,
+    val lastPage: Int,
+    val totalPages: Int,
+    val read: Boolean,
+    val updatedAt: Long,
+)
+
 @Dao
 interface LibraryDao {
     @Query("SELECT * FROM library ORDER BY addedAt DESC")
@@ -35,7 +48,30 @@ interface LibraryDao {
     suspend fun remove(id: String)
 }
 
-@Database(entities = [LibraryManga::class], version = 1, exportSchema = false)
+@Dao
+interface ProgressDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(progress: ReadProgress)
+
+    @Query("SELECT chapterId FROM progress WHERE mangaId = :mangaId AND read = 1")
+    fun readChapterIds(mangaId: String): Flow<List<String>>
+
+    @Query("SELECT * FROM progress WHERE mangaId = :mangaId ORDER BY updatedAt DESC LIMIT 1")
+    suspend fun lastRead(mangaId: String): ReadProgress?
+
+    @Query("SELECT * FROM progress ORDER BY updatedAt DESC LIMIT 100")
+    fun history(): Flow<List<ReadProgress>>
+
+    @Query("DELETE FROM progress")
+    suspend fun clearHistory()
+}
+
+@Database(
+    entities = [LibraryManga::class, ReadProgress::class],
+    version = 2,
+    exportSchema = false,
+)
 abstract class ZarkiDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
+    abstract fun progressDao(): ProgressDao
 }
