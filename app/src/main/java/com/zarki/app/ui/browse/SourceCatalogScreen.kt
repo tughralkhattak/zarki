@@ -11,6 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -43,6 +48,18 @@ fun SourceCatalogScreen(
     onOpenManga: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val gridState = rememberLazyGridState()
+
+    // Infinite scroll: load the next page when near the end of the grid.
+    val nearEnd by remember {
+        derivedStateOf {
+            val last = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            last >= state.manga.size - 8
+        }
+    }
+    LaunchedEffect(Unit) {
+        snapshotFlow { nearEnd }.collect { if (it) viewModel.loadMore() }
+    }
 
     Scaffold(
         topBar = {
@@ -114,6 +131,7 @@ fun SourceCatalogScreen(
                         )
 
                     else -> LazyVerticalGrid(
+                        state = gridState,
                         columns = GridCells.Adaptive(112.dp),
                         contentPadding = PaddingValues(12.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),

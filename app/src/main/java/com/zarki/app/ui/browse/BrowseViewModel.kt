@@ -15,6 +15,7 @@ enum class BrowseFilter { POPULAR, LATEST }
 
 data class CatalogState(
     val loading: Boolean = false,
+    val loadingMore: Boolean = false,
     val manga: List<Manga> = emptyList(),
     val query: String = "",
     val filter: BrowseFilter = BrowseFilter.POPULAR,
@@ -32,22 +33,50 @@ class CatalogViewModel(sourceId: String) : ViewModel() {
     val state: StateFlow<CatalogState> = _state.asStateFlow()
 
     private var searchJob: Job? = null
+    private var page = 0
+    private var endReached = false
 
     init {
         load(BrowseFilter.POPULAR)
     }
 
     fun load(filter: BrowseFilter) {
+        page = 0
+        endReached = false
         _state.value = _state.value.copy(loading = true, error = null, query = "", filter = filter)
         viewModelScope.launch {
             runCatching {
                 when (filter) {
-                    BrowseFilter.POPULAR -> source.popular()
-                    BrowseFilter.LATEST -> source.latest()
+                    BrowseFilter.POPULAR -> source.popular(0)
+                    BrowseFilter.LATEST -> source.latest(0)
                 }
             }
                 .onSuccess { _state.value = _state.value.copy(loading = false, manga = it) }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message ?: "Failed to load") }
+        }
+    }
+
+    /** Loads the next page and appends — drives infinite scroll. */
+    fun loadMore() {
+        val s = _state.value
+        if (s.loading || s.loadingMore || endReached || s.query.isNotBlank()) return
+        _state.value = s.copy(loadingMore = true)
+        page++
+        viewModelScope.launch {
+            runCatching {
+                when (s.filter) {
+                    BrowseFilter.POPULAR -> source.popular(page)
+                    BrowseFilter.LATEST -> source.latest(page)
+                }
+            }.onSuccess { more ->
+                if (more.isEmpty()) endReached = true
+                _state.value = _state.value.copy(
+                    loadingMore = false,
+                    manga = (_state.value.manga + more).distinctBy { it.id },
+                )
+            }.onFailure {
+                _state.value = _state.value.copy(loadingMore = false)
+            }
         }
     }
 
