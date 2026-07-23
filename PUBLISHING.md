@@ -16,7 +16,7 @@ Your app is signed with `zarki-release.keystore` (password in `keystore.properti
 
 ## ✅ Option 1 — GitHub Releases (FREE, do this first)
 
-Gives you a public link anyone can download from: `github.com/tughralkhattak/zarki/releases`
+Gives you a public link anyone can download from: `github.com/zarkidev/zarki/releases`
 
 1. The signed APK is at `app/build/outputs/apk/release/app-release.apk`.
 2. A GitHub Release has been created with it attached (or run:
@@ -86,4 +86,4 @@ The biggest reach. Requires a one-time **$25** developer fee.
 
 ---
 
-© 2026 Tughral Khattak. All rights reserved.
+© 2026 Zarki. All rights reserved.

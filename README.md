@@ -52,7 +52,7 @@ ui/
 **Requirements:** Android Studio (JDK 17+), Android SDK 35.
 
 ```bash
-git clone https://github.com/tughralkhattak/zarki
+git clone https://github.com/zarkidev/zarki
 cd zarki
 # open in Android Studio, or from the command line:
 ./gradlew assembleDebug
@@ -76,12 +76,12 @@ Contributions are welcome! Whether it's a bug fix, a new feature, or an idea:
 3. Make your changes and commit them
 4. **Open a pull request**
 
-Bug reports and feature ideas are also welcome via the **[Issues](https://github.com/tughralkhattak/zarki/issues)** tab. See [CONTRIBUTING.md](CONTRIBUTING.md) for details. By contributing, your changes become part of Zarki under its license.
+Bug reports and feature ideas are also welcome via the **[Issues](https://github.com/zarkidev/zarki/issues)** tab. See [CONTRIBUTING.md](CONTRIBUTING.md) for details. By contributing, your changes become part of Zarki under its license.
 
 ## 👤 Author & Ownership
-Designed and built by **Tughral Khattak**.
+Designed and built by **Zarki**.
 
-© 2026 Tughral Khattak. **All rights reserved.** Zarki and its source code are the
+© 2026 Zarki. **All rights reserved.** Zarki and its source code are the
 property of the author — see [LICENSE](LICENSE). Manga content is provided by the
 MangaDex API and belongs to its respective creators.
 

@@ -34,7 +34,7 @@ ui/        Compose screens + ViewModels (browse, detail, reader, library, histor
 
 ## License of contributions
 
-By submitting a contribution you agree it is licensed to the author (Tughral Khattak) and becomes part of Zarki under the project [LICENSE](LICENSE), with the author retaining ownership of the combined work.
+By submitting a contribution you agree it is licensed to the author (Zarki) and becomes part of Zarki under the project [LICENSE](LICENSE), with the author retaining ownership of the combined work.
 
 ---
 

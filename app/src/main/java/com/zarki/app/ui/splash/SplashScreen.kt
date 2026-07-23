@@ -28,7 +28,7 @@ import androidx.compose.material3.Text
 import kotlinx.coroutines.launch
 
 /**
- * Animated launch screen: "Zarki" scales/fades in, with "Khattak"
+ * Animated launch screen: "Zarki" scales/fades in, with "Zarkidev"
  * elegantly fading in at the bottom.
  */
 @Composable
@@ -107,7 +107,7 @@ fun SplashScreen() {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "Khattak",
+                text = "Zarkidev",
                 textAlign = TextAlign.Center,
                 style = TextStyle(
                     fontSize = 26.sp,

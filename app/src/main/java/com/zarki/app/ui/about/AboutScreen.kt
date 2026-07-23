@@ -74,11 +74,11 @@ fun AboutScreen() {
         )
 
         Section("Author")
-        Body("Designed and built by Tughral Khattak.")
+        Body("Designed and built by Zarki.")
 
         Section("Rights & ownership")
         Body(
-            "© 2026 Tughral Khattak. All rights reserved. Zarki and its source code are the " +
+            "© 2026 Zarki. All rights reserved. Zarki and its source code are the " +
                 "property of the author. Manga content is provided by the MangaDex API and remains " +
                 "the property of its respective creators and rights holders.",
         )
